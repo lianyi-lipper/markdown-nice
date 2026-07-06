@@ -30,6 +30,7 @@ import {
   THROTTLE_MD_RENDER_TIME,
 } from "./utils/constant";
 import {markdownParser, updateMathjax} from "./utils/helper";
+import diagnoseMarkdown from "./utils/markdownDiagnostics";
 import pluginCenter from "./utils/pluginCenter";
 import appContext from "./utils/appContext";
 import {uploadAdaptor} from "./utils/imageHosting";
@@ -51,6 +52,7 @@ class App extends Component {
     this.handleThrottleChange = throttle(this.handleChange, THROTTLE_MD_RENDER_TIME);
     this.state = {
       focus: false,
+      diagnosticsOpen: false,
     };
   }
 
@@ -233,6 +235,12 @@ class App extends Component {
     this.props.onTextBlur && this.props.onTextBlur(editor.getValue());
   };
 
+  toggleDiagnostics = () => {
+    this.setState((state) => ({
+      diagnosticsOpen: !state.diagnosticsOpen,
+    }));
+  };
+
   getStyleInstance = (instance) => {
     if (instance) {
       this.styleEditor = instance.editor;
@@ -307,7 +315,12 @@ class App extends Component {
     const {isEditAreaOpen, isPreviewAreaOpen, isStyleEditorOpen, isImmersiveEditing} = this.props.view;
     const {isSearchOpen} = this.props.dialog;
 
-    const parseHtml = markdownParser.render(this.props.content.content);
+    const {content} = this.props.content;
+    const parseHtml = markdownParser.render(content);
+    const diagnostics = diagnoseMarkdown(content);
+    const diagnosticsToggleText = `可能的 Markdown 渲染问题（${diagnostics.length}）${
+      this.state.diagnosticsOpen ? "收起" : "展开"
+    }`;
 
     const mdEditingClass = classnames({
       "nice-md-editing": !isImmersiveEditing,
@@ -345,13 +358,13 @@ class App extends Component {
               <div id="nice-md-editor" className={mdEditingClass} onMouseOver={(e) => this.setCurrentIndex(1, e)}>
                 {isSearchOpen && <SearchBox />}
                 <CodeMirror
-                  value={this.props.content.content}
+                  value={content}
                   options={{
                     theme: "md-mirror",
                     keyMap: "sublime",
                     mode: "markdown",
                     lineWrapping: true,
-                    lineNumbers: false,
+                    lineNumbers: true,
                     extraKeys: {
                       ...bindHotkeys(this.props.content, this.props.dialog),
                       Tab: betterTab,
@@ -366,6 +379,34 @@ class App extends Component {
                   onPaste={this.handlePaste}
                   ref={this.getInstance}
                 />
+                {diagnostics.length > 0 && (
+                  <div
+                    className={`nice-markdown-diagnostics ${
+                      this.state.diagnosticsOpen ? "" : "nice-markdown-diagnostics-collapsed"
+                    }`}
+                  >
+                    <button className="nice-markdown-diagnostics-title" type="button" onClick={this.toggleDiagnostics}>
+                      {diagnosticsToggleText}
+                    </button>
+                    {this.state.diagnosticsOpen && (
+                      <div>
+                        {diagnostics.slice(0, 6).map((diagnostic, index) => (
+                          <div
+                            className="nice-markdown-diagnostics-item"
+                            key={`${diagnostic.line}-${diagnostic.column}-${index}`}
+                          >
+                            {`第 ${diagnostic.line} 行，第 ${diagnostic.column} 列：${diagnostic.message}`}
+                          </div>
+                        ))}
+                        {diagnostics.length > 6 && (
+                          <div className="nice-markdown-diagnostics-more">
+                            {`还有 ${diagnostics.length - 6} 个问题未显示`}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               <div id="nice-rich-text" className={richTextClass} onMouseOver={(e) => this.setCurrentIndex(2, e)}>
                 <Sidebar />
