@@ -31,6 +31,7 @@ import {
 } from "./utils/constant";
 import {markdownParser, updateMathjax} from "./utils/helper";
 import diagnoseMarkdown from "./utils/markdownDiagnostics";
+import {diagnoseExamMarkdown, insertAnswerPlaceholders} from "./utils/examMarkdownDiagnostics";
 import pluginCenter from "./utils/pluginCenter";
 import appContext from "./utils/appContext";
 import {uploadAdaptor} from "./utils/imageHosting";
@@ -53,6 +54,7 @@ class App extends Component {
     this.state = {
       focus: false,
       diagnosticsOpen: false,
+      examDiagnosticsOpen: false,
     };
   }
 
@@ -241,6 +243,21 @@ class App extends Component {
     }));
   };
 
+  toggleExamDiagnostics = () => {
+    this.setState((state) => ({
+      examDiagnosticsOpen: !state.examDiagnosticsOpen,
+    }));
+  };
+
+  fillExamAnswerPlaceholders = () => {
+    const nextContent = insertAnswerPlaceholders(this.props.content.content);
+    this.props.content.setContent(nextContent);
+    if (this.props.content.markdownEditor) {
+      this.props.content.markdownEditor.setValue(nextContent);
+    }
+    this.props.onTextChange && this.props.onTextChange(nextContent);
+  };
+
   getStyleInstance = (instance) => {
     if (instance) {
       this.styleEditor = instance.editor;
@@ -313,13 +330,20 @@ class App extends Component {
   render() {
     const {previewType} = this.props.navbar;
     const {isEditAreaOpen, isPreviewAreaOpen, isStyleEditorOpen, isImmersiveEditing} = this.props.view;
+    const {isExamDiagnosticsEnabled} = this.props.view;
     const {isSearchOpen} = this.props.dialog;
 
     const {content} = this.props.content;
     const parseHtml = markdownParser.render(content);
     const diagnostics = diagnoseMarkdown(content);
+    const examDiagnostics = isExamDiagnosticsEnabled ? diagnoseExamMarkdown(content) : [];
     const diagnosticsToggleText = `可能的 Markdown 渲染问题（${diagnostics.length}）${
       this.state.diagnosticsOpen ? "收起" : "展开"
+    }`;
+    const examErrorCount = examDiagnostics.filter((item) => item.severity === "error").length;
+    const examWarningCount = examDiagnostics.length - examErrorCount;
+    const examDiagnosticsToggleText = `试卷 Markdown 检查（${examErrorCount} 错 / ${examWarningCount} 提示）${
+      this.state.examDiagnosticsOpen ? "收起" : "展开"
     }`;
 
     const mdEditingClass = classnames({
@@ -401,6 +425,50 @@ class App extends Component {
                         {diagnostics.length > 6 && (
                           <div className="nice-markdown-diagnostics-more">
                             {`还有 ${diagnostics.length - 6} 个问题未显示`}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {isExamDiagnosticsEnabled && (
+                  <div
+                    className={`nice-exam-diagnostics ${
+                      this.state.examDiagnosticsOpen ? "" : "nice-exam-diagnostics-collapsed"
+                    }`}
+                  >
+                    <button
+                      className="nice-markdown-diagnostics-title"
+                      type="button"
+                      onClick={this.toggleExamDiagnostics}
+                    >
+                      {examDiagnosticsToggleText}
+                    </button>
+                    {this.state.examDiagnosticsOpen && (
+                      <div>
+                        <div className="nice-exam-diagnostics-actions">
+                          <button
+                            className="nice-exam-diagnostics-action"
+                            type="button"
+                            onClick={this.fillExamAnswerPlaceholders}
+                          >
+                            生成缺失答案槽位
+                          </button>
+                        </div>
+                        {examDiagnostics.slice(0, 8).map((diagnostic, index) => (
+                          <div
+                            className={`nice-markdown-diagnostics-item nice-exam-diagnostics-${diagnostic.severity}`}
+                            key={`${diagnostic.line}-${diagnostic.column}-${index}`}
+                          >
+                            {`第 ${diagnostic.line} 行，第 ${diagnostic.column} 列：${diagnostic.message}`}
+                          </div>
+                        ))}
+                        {examDiagnostics.length === 0 && (
+                          <div className="nice-markdown-diagnostics-item">未发现标准试卷 Markdown 结构问题。</div>
+                        )}
+                        {examDiagnostics.length > 8 && (
+                          <div className="nice-markdown-diagnostics-more">
+                            {`还有 ${examDiagnostics.length - 8} 个问题未显示`}
                           </div>
                         )}
                       </div>

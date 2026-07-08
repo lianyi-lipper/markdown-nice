@@ -9,6 +9,8 @@ class View {
 
   @observable isImmersiveEditing = false;
 
+  @observable isExamDiagnosticsEnabled = false;
+
   @action
   setEditAreaOpen = (isEditAreaOpen) => {
     this.isEditAreaOpen = isEditAreaOpen;
@@ -27,6 +29,11 @@ class View {
   @action
   setImmersiveEditing = (isImmersiveEditing) => {
     this.isImmersiveEditing = isImmersiveEditing;
+  };
+
+  @action
+  setExamDiagnosticsEnabled = (isExamDiagnosticsEnabled) => {
+    this.isExamDiagnosticsEnabled = isExamDiagnosticsEnabled;
   };
 }
 

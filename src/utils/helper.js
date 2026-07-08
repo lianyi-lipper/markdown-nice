@@ -57,6 +57,7 @@ export const deCode = (str) => {
 // 普通解析器，代码高亮用highlight
 export const markdownParser = new MarkdownIt({
   html: true,
+  breaks: true,
   highlight: (str, lang) => {
     if (lang === undefined || lang === "") {
       lang = "bash";

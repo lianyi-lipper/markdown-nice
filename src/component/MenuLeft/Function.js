@@ -5,6 +5,7 @@ import Reset from "./Function/Reset";
 import Search from "./Function/Search";
 import History from "./Function/History";
 import SitDown from "./Function/SitDown";
+import ExamDiagnostics from "./Function/ExamDiagnostics";
 
 import "./common.css";
 
@@ -24,6 +25,9 @@ const menu = (
     </Menu.Item>
     <Menu.Item>
       <SitDown />
+    </Menu.Item>
+    <Menu.Item>
+      <ExamDiagnostics />
     </Menu.Item>
   </Menu>
 );
