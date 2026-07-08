@@ -88,7 +88,7 @@ class ImageDialog extends Component {
     else if (this.props.imageHosting.type === "GitHub") {
       uploadAdaptor({formData, file, action, onProgress, onSuccess, onError, headers, withCredentials, images});
     }
-    // 使用用户提供的图床或是默认mdnice图床
+    // 使用用户提供的图床或是默认图床
     else {
       uploadAdaptor({formData, file, onSuccess, onError, images});
     }

@@ -356,7 +356,7 @@ export const giteeUpload = ({
 
     formData.append("content", base64);
     formData.append("access_token", config.token);
-    formData.append("message", "mdnice upload picture");
+    formData.append("message", "upload picture");
 
     axios
       .post(url, formData, {
@@ -430,7 +430,7 @@ export const githubUpload = ({
 
     const data = {
       content: base64,
-      message: "mdnice upload picture",
+      message: "upload picture",
     };
 
     axios

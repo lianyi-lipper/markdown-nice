@@ -77,7 +77,7 @@ class QiniuOSS extends Component {
     return (
       <Form {...formItemLayout}>
         <Form.Item label="存储空间名称" style={style.formItem}>
-          <Input value={bucket} onChange={this.bucketChange} placeholder="例如：my-wechat" />
+          <Input value={bucket} onChange={this.bucketChange} placeholder="例如：my-bucket" />
         </Form.Item>
         <Form.Item label="存储区域" style={style.formItem}>
           <Select value={region} onChange={this.regionChange} placeholder="例如：qiniu.region.z2">
@@ -95,20 +95,13 @@ class QiniuOSS extends Component {
           <Input value={secretKey} onChange={this.secretKeyChange} placeholder="例如：qweASDF1234zxcvbqweASD" />
         </Form.Item>
         <Form.Item label="自定义域名" style={style.formItem}>
-          <Input value={link} onChange={this.linkChange} addonBefore="https://" placeholder="例如：qiniu.mdnice.com" />
+          <Input value={link} onChange={this.linkChange} addonBefore="https://" placeholder="例如：cdn.example.com" />
         </Form.Item>
         <Form.Item label="自定义命名空间" style={style.formItem}>
           <Input value={namespace} onChange={this.namespaceChange} placeholder="例如：image/" />
         </Form.Item>
         <Form.Item label="提示" style={style.formItem}>
-          <span>配置后请在右上角进行切换，</span>
-          <a
-            rel="noopener noreferrer"
-            target="_blank"
-            href="https://preview.mdnice.com/article/developer/qiniu-image-hosting/"
-          >
-            七牛云图床配置文档
-          </a>
+          <span>配置后请在右上角进行切换。</span>
         </Form.Item>
       </Form>
     );

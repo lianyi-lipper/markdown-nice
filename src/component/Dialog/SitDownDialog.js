@@ -98,14 +98,6 @@ class SitDownDialog extends Component {
           placeholder="请放入网页源代码"
         />
         <span>提示：右键-&gt;显示网页源代码-&gt;全选-&gt;复制粘贴。</span>
-        <a
-          id="nice-sitdown-dialog-doc"
-          rel="noopener noreferrer"
-          target="_blank"
-          href="https://preview.mdnice.com/article/user/sitdown/"
-        >
-          详细文档
-        </a>
       </Modal>
     );
   }

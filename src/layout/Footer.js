@@ -52,12 +52,7 @@ class Footer extends Component {
   };
 
   handleMenu = ({key, domEvent}) => {
-    if (key === "thanks") {
-      const w = window.open("about:blank");
-      w.location.href = "https://github.com/mdnice/sitdown";
-    } else {
-      this.setState({engineDesc: key});
-    }
+    this.setState({engineDesc: key});
     domEvent.stopPropagation();
   };
 
@@ -69,10 +64,6 @@ class Footer extends Component {
             <div>{option.value}</div>
           </Menu.Item>
         ))}
-        <Menu.Divider />
-        <Menu.Item key="thanks">
-          <a>SitDown 引擎提供支持</a>
-        </Menu.Item>
       </Menu>
     );
 

@@ -2,7 +2,7 @@ import React, {Component} from "react";
 import {observer, inject} from "mobx-react";
 import {message, Tooltip} from "antd";
 
-import {solveHtml, solveJuejinMath, solveJuejinCode, addJuejinSuffix, copySafari} from "../../utils/converter";
+import {solveHtml, solveJuejinMath, solveJuejinCode, copySafari} from "../../utils/converter";
 import {LAYOUT_ID, ENTER_DELAY, LEAVE_DELAY} from "../../utils/constant";
 import SvgIcon from "../../icon";
 import "./Juejin.css";
@@ -22,14 +22,13 @@ class Juejin extends Component {
     const layout = document.getElementById(LAYOUT_ID); // 保护现场
     const html = layout.innerHTML;
     solveJuejinMath();
-    addJuejinSuffix();
     this.html = solveHtml();
     this.html = solveJuejinCode(this.html);
     copySafari(this.html);
     if (this.html.length > 60000) {
       message.error("超过 60000 字符，无法上传稀土掘金");
     } else {
-      message.success("已复制且添加 mdnice 排版后缀，感谢宣传，请到稀土掘金粘贴");
+      message.success("已复制，请到稀土掘金粘贴");
     }
     layout.innerHTML = html; // 恢复现场
   };

@@ -2,11 +2,10 @@ import React from "react";
 import {Menu, Dropdown} from "antd";
 import {observer, inject} from "mobx-react";
 
-import {RIGHT_SYMBOL, TEMPLATE_NUM, MARKDOWN_THEME_ID, THEME_LIST, STYLE, THEME_API, TOKEN} from "../../utils/constant";
+import {RIGHT_SYMBOL, TEMPLATE_NUM, MARKDOWN_THEME_ID, THEME_LIST, STYLE} from "../../utils/constant";
 import {replaceStyle} from "../../utils/helper";
 import TEMPLATE from "../../template/index";
 import "./Theme.css";
-import axios from "axios";
 
 @inject("content")
 @inject("navbar")
@@ -33,49 +32,13 @@ class Theme extends React.Component {
     this.props.view.setStyleEditorOpen(!isStyleEditorOpen);
   };
 
-  subscribeMore = () => {
-    const w = window.open("about:blank");
-    w.location.href = "https://preview.mdnice.com/themes";
-  };
-
-  componentDidMount = async () => {
-    let themeList = null;
-    try {
-      const {token} = this.props;
-      let response;
-      let remoteThemelist;
-      if (token) {
-        // 如果处于登录状态，则读取订阅的主题
-        response = await axios.get(`https://api.mdnice.com/themes/editor`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (!response.data.success) {
-          throw new Error();
-        }
-        remoteThemelist = response.data.data;
-      } else {
-        // 否则默认主题
-        response = await axios.get(THEME_API());
-        if (!response.data.success) {
-          throw new Error();
-        }
-        remoteThemelist = response.data.data.themeList;
-      }
-
-      themeList = [
-        {themeId: "normal", name: "默认主题", css: TEMPLATE.normal},
-        ...remoteThemelist,
-        {themeId: "custom", name: "自定义", css: TEMPLATE.custom},
-      ];
-      this.props.content.setThemeList(themeList);
-    } catch (err) {
-      console.error("读取最新主题信息错误");
-      // 降级方案：使用本地的值
-      themeList = JSON.parse(window.localStorage.getItem(THEME_LIST));
-      this.props.content.setThemeList(themeList);
-    }
+  componentDidMount = () => {
+    const fallbackThemeList = [
+      {themeId: "normal", name: "默认主题", css: TEMPLATE.normal},
+      {themeId: "custom", name: "自定义", css: TEMPLATE.custom},
+    ];
+    const themeList = JSON.parse(window.localStorage.getItem(THEME_LIST)) || fallbackThemeList;
+    this.props.content.setThemeList(themeList);
 
     const templateNum = parseInt(window.localStorage.getItem(TEMPLATE_NUM), 10);
 
@@ -115,15 +78,6 @@ class Theme extends React.Component {
             </div>
           </Menu.Item>
         ))}
-        <Menu.Divider />
-        <li className="nice-themeselect-menu-item">
-          <div id="nice-menu-subscribe-more" className="nice-themeselect-theme-item" onClick={this.subscribeMore}>
-            <span>
-              <span className="nice-themeselect-theme-item-flag" />
-              <span className="nice-themeselect-theme-item-name nice-menu-subscribe-more">订阅更多主题</span>
-            </span>
-          </div>
-        </li>
         <Menu.Divider />
 
         <li className="nice-themeselect-menu-item">

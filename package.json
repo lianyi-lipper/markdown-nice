@@ -6,12 +6,12 @@
   "private": false,
   "main": "lib/Lib.js",
   "module": "lib/Lib.js",
-  "homepage": "https://www.mdnice.com",
+  "homepage": "https://github.com/lianyi-lipper/markdown-nice",
   "license": "GPL-3.0",
   "typings": "./lib/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mdnice/markdown-nice"
+    "url": "https://github.com/lianyi-lipper/markdown-nice"
   },
   "scripts": {
     "start": "node scripts/start.js",
@@ -124,7 +124,7 @@
   },
   "build": {
     "productName": "Markdown Nice",
-    "appId": "com.mdnice.www",
+    "appId": "com.lianyilipper.markdownnice",
     "mac": {
       "target": [
         "dmg",

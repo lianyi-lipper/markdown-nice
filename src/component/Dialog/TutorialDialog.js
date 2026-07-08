@@ -42,9 +42,11 @@ class TutorialDialog extends Component {
         }}
       >
         <p style={style.lineHeight}>左侧为 Markdown 可编辑文本，右侧为渲染效果</p>
-        <div style={{display: "flex", alignItems: "center"}}>
-          <img alt="图片描述" style={style.imgWidth} src={this.props.dialog.tutorialPicture} />
-        </div>
+        {this.props.dialog.tutorialPicture && (
+          <div style={{display: "flex", alignItems: "center"}}>
+            <img alt="教程示例" style={style.imgWidth} src={this.props.dialog.tutorialPicture} />
+          </div>
+        )}
       </Modal>
     );
   }

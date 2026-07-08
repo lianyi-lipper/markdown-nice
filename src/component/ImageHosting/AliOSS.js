@@ -57,7 +57,7 @@ class AliOSS extends Component {
     return (
       <Form {...formItemLayout}>
         <Form.Item label="Bucket" style={style.formItem}>
-          <Input value={bucket} onChange={this.bucketChange} placeholder="例如：my-wechat" />
+          <Input value={bucket} onChange={this.bucketChange} placeholder="例如：my-bucket" />
         </Form.Item>
         <Form.Item label="Region" style={style.formItem}>
           <Input value={region} onChange={this.regionChange} placeholder="例如：oss-cn-hangzhou" />
@@ -73,14 +73,7 @@ class AliOSS extends Component {
           />
         </Form.Item>
         <Form.Item label="提示" style={style.formItem}>
-          <span>配置后请在右上角进行切换，</span>
-          <a
-            rel="noopener noreferrer"
-            target="_blank"
-            href="https://preview.mdnice.com/article/developer/aliyun-image-hosting/"
-          >
-            阿里云图床配置文档
-          </a>
+          <span>配置后请在右上角进行切换。</span>
         </Form.Item>
       </Form>
     );

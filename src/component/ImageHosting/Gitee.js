@@ -50,7 +50,7 @@ class Gitee extends Component {
     return (
       <Form {...formItemLayout}>
         <Form.Item label="用户名" style={style.formItem}>
-          <Input value={username} onChange={this.usernameChange} placeholder="例如：mdnice" />
+          <Input value={username} onChange={this.usernameChange} placeholder="例如：username" />
         </Form.Item>
         <Form.Item label="仓库名" style={style.formItem}>
           <Input value={repo} onChange={this.repoChange} placeholder="例如：picture" />
@@ -59,14 +59,7 @@ class Gitee extends Component {
           <Input value={token} onChange={this.tokenChange} placeholder="例如：qweASDF1234zxcvb" />
         </Form.Item>
         <Form.Item label="提示" style={style.formItem}>
-          <span>配置后请在右上角进行切换，</span>
-          <a
-            rel="noopener noreferrer"
-            target="_blank"
-            href="https://preview.mdnice.com/article/developer/gitee-image-hosting/"
-          >
-            Gitee 图床配置文档
-          </a>
+          <span>配置后请在右上角进行切换。</span>
         </Form.Item>
       </Form>
     );
