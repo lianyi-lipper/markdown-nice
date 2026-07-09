@@ -6,7 +6,7 @@
   "private": false,
   "main": "lib/Lib.js",
   "module": "lib/Lib.js",
-  "homepage": "https://github.com/lianyi-lipper/markdown-nice",
+  "homepage": ".",
   "license": "GPL-3.0",
   "typings": "./lib/index.d.ts",
   "repository": {

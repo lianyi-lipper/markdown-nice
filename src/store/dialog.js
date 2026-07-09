@@ -17,14 +17,6 @@ class Dialog {
 
   @observable isSitDownOpen = false;
 
-  @observable isTutorialOpen = false;
-
-  @observable tutorialTitle;
-
-  @observable tutorialContent;
-
-  @observable tutorialPicture;
-
   @action
   setImageOpen = (isImageOpen) => {
     this.isImageOpen = isImageOpen;
@@ -63,26 +55,6 @@ class Dialog {
   @action
   setSitDownOpen = (isSitDownOpen) => {
     this.isSitDownOpen = isSitDownOpen;
-  };
-
-  @action
-  setTutorialOpen = (isTutorialOpen) => {
-    this.isTutorialOpen = isTutorialOpen;
-  };
-
-  @action
-  setTutorialTitle = (tutorialTitle) => {
-    this.tutorialTitle = tutorialTitle;
-  };
-
-  @action
-  setTutorialContent = (tutorialContent) => {
-    this.tutorialContent = tutorialContent;
-  };
-
-  @action
-  setTutorialPicture = (tutorialPicture) => {
-    this.tutorialPicture = tutorialPicture;
   };
 }
 
