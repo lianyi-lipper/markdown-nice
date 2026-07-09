@@ -122,8 +122,6 @@ Lib.defaultProps = {
   useImageHosting: {
     url: "",
     name: "",
-    isSmmsOpen: true,
-    isQiniuyunOpen: true,
     isAliyunOpen: true,
     isGiteeOpen: true,
     isGitHubOpen: true,
@@ -143,8 +141,6 @@ Lib.propTypes = {
   useImageHosting: PropTypes.shape({
     url: PropTypes.string,
     name: PropTypes.string,
-    isSmmsOpen: PropTypes.bool,
-    isQiniuyunOpen: PropTypes.bool,
     isAliyunOpen: PropTypes.bool,
     isGiteeOpen: PropTypes.bool,
     isGitHubOpen: PropTypes.bool,

@@ -51,8 +51,6 @@ export interface MarkdownNiceProps {
   useImageHosting?: {
     url: string;
     name: string;
-    isSmmsOpen: boolean;
-    isQiniuyunOpen: boolean;
     isAliyunOpen: boolean;
     isGiteeOpen: boolean;
     isGitHubOpen: boolean;

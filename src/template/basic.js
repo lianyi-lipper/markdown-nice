@@ -396,10 +396,6 @@ export default `/*默认样式，最佳实践*/
   color: #888;
 }
 
-#nice .nice-suffix-juejin-container {
-  margin-top: 20px !important;
-}
-
 #nice figure a {
   border: none;
 }

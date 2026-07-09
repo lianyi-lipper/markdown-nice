@@ -5,12 +5,11 @@ import {Modal, Upload, Tabs, Select} from "antd";
 import SvgIcon from "../../icon";
 
 import AliOSS from "../ImageHosting/AliOSS";
-import QiniuOSS from "../ImageHosting/QiniuOSS";
 import Gitee from "../ImageHosting/Gitee";
 import GitHub from "../ImageHosting/GitHub";
 
 import {uploadAdaptor} from "../../utils/imageHosting";
-import {SM_MS_PROXY, IMAGE_HOSTING_TYPE, IMAGE_HOSTING_NAMES} from "../../utils/constant";
+import {IMAGE_HOSTING_TYPE, IMAGE_HOSTING_NAMES} from "../../utils/constant";
 import appContext from "../../utils/appContext";
 
 const {Dragger} = Upload;
@@ -72,14 +71,6 @@ class ImageDialog extends Component {
     if (this.props.imageHosting.type === "阿里云") {
       uploadAdaptor({file, onSuccess, onError, images});
     }
-    // 使用七牛云图床
-    else if (this.props.imageHosting.type === "七牛云") {
-      uploadAdaptor({file, onSuccess, onError, onProgress, images});
-    }
-    // 使用SM.MS图床
-    else if (this.props.imageHosting.type === "SM.MS") {
-      uploadAdaptor({formData, file, action, onProgress, onSuccess, onError, headers, withCredentials});
-    }
     // 使用Gitee图床
     else if (this.props.imageHosting.type === "Gitee") {
       uploadAdaptor({formData, file, action, onProgress, onSuccess, onError, headers, withCredentials, images});
@@ -134,7 +125,7 @@ class ImageDialog extends Component {
           {({useImageHosting}) => (
             <Tabs tabBarExtraContent={imageHostingSwitch} type="card">
               <TabPane tab="图片上传" key="1">
-                <Dragger name="file" multiple action={SM_MS_PROXY} customRequest={this.customRequest}>
+                <Dragger name="file" multiple customRequest={this.customRequest}>
                   <p className="ant-upload-drag-icon">
                     <SvgIcon name="inbox" style={style.svgIcon} fill="#40a9ff" />
                   </p>
@@ -145,11 +136,6 @@ class ImageDialog extends Component {
               {useImageHosting.isAliyunOpen ? (
                 <TabPane tab={IMAGE_HOSTING_NAMES.aliyun} key="2">
                   <AliOSS />
-                </TabPane>
-              ) : null}
-              {useImageHosting.isQiniuyunOpen ? (
-                <TabPane tab={IMAGE_HOSTING_NAMES.qiniuyun} key="3">
-                  <QiniuOSS />
                 </TabPane>
               ) : null}
               {useImageHosting.isGiteeOpen ? (

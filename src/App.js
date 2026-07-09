@@ -115,20 +115,14 @@ class App extends Component {
     if (this.props.useImageHosting === undefined) {
       return;
     }
-    const {url, name, isSmmsOpen, isQiniuyunOpen, isAliyunOpen, isGiteeOpen, isGitHubOpen} = this.props.useImageHosting;
+    const {url, name, isAliyunOpen, isGiteeOpen, isGitHubOpen} = this.props.useImageHosting;
     if (name) {
       this.props.imageHosting.setHostingUrl(url);
       this.props.imageHosting.setHostingName(name);
       this.props.imageHosting.addImageHosting(name);
     }
-    if (isSmmsOpen) {
-      this.props.imageHosting.addImageHosting(IMAGE_HOSTING_NAMES.smms);
-    }
     if (isAliyunOpen) {
       this.props.imageHosting.addImageHosting(IMAGE_HOSTING_NAMES.aliyun);
-    }
-    if (isQiniuyunOpen) {
-      this.props.imageHosting.addImageHosting(IMAGE_HOSTING_NAMES.qiniuyun);
     }
     if (isGiteeOpen) {
       this.props.imageHosting.addImageHosting(IMAGE_HOSTING_NAMES.gitee);
@@ -142,14 +136,10 @@ class App extends Component {
       let type;
       if (name) {
         type = name;
-      } else if (isSmmsOpen) {
-        type = IMAGE_HOSTING_NAMES.smms;
       } else if (isAliyunOpen) {
         type = IMAGE_HOSTING_NAMES.aliyun;
-      } else if (isQiniuyunOpen) {
-        type = IMAGE_HOSTING_NAMES.qiniuyun;
       } else if (isGiteeOpen) {
-        type = IMAGE_HOSTING_NAMES.isGitee;
+        type = IMAGE_HOSTING_NAMES.gitee;
       }
       this.props.imageHosting.setType(type);
       window.localStorage.setItem(IMAGE_HOSTING_TYPE, type);

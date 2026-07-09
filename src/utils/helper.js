@@ -22,18 +22,6 @@ export const axiosGithub = axios.create({
   },
 });
 
-export const axiosJSON = axios.create({
-  headers: {
-    Accept: "application/json",
-    "Content-Type": "application/json",
-  },
-});
-
-export const axiosMdnice = axios.create({
-  // baseURL: process.env.NODE_ENV === "development" ? "http://localhost:8081" : "https://math.mdnice.com",
-  baseURL: process.env.NODE_ENV === "development" ? "https://math.mdnice.com" : "https://math.mdnice.com",
-});
-
 export const queryParse = (search = window.location.search) => {
   if (!search) return {};
   const queryString = search[0] === "?" ? search.substring(1) : search;
