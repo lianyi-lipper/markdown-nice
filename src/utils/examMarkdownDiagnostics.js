@@ -5,12 +5,12 @@ const METADATA_KEYS = [
   "title",
   "year",
   "semester",
-  "region_or_variant",
+  "region",
   "exam_type",
   "school_or_organization",
   "grade",
   "subject",
-  "variant_label",
+  "variant_labels",
 ];
 
 const buildLineStarts = (text) => {
@@ -194,11 +194,31 @@ const parseExamMarkdown = (text = "") => {
       if (field) {
         if (METADATA_KEYS.includes(field.key)) {
           metadataFields[field.key] = {value: field.value, line: lineNo, offset};
+          if (field.key === "variant_labels" && !field.value) currentBlock = "metadata_variant_labels";
         } else {
           addIssue(issues, lineStarts, offset, "error", `未知元数据字段：${field.key}。`);
         }
       } else if (trimmed) {
         addIssue(issues, lineStarts, offset, "error", "元数据字段必须写在第一个二级大题之前，并使用 key: value。");
+      }
+      return;
+    }
+
+    if (currentBlock === "metadata_variant_labels") {
+      if (!trimmed) return;
+      if (/^\s*-\s+.+/.test(textLine)) return;
+      currentBlock = "metadata_fields";
+      const field = parseField(textLine);
+      if (field && METADATA_KEYS.includes(field.key)) {
+        metadataFields[field.key] = {value: field.value, line: lineNo, offset};
+      } else {
+        addIssue(
+          issues,
+          lineStarts,
+          offset,
+          "error",
+          "variant_labels 下必须使用 Markdown 列表，后续元数据仍使用 key: value。",
+        );
       }
       return;
     }
@@ -259,7 +279,7 @@ const parseExamMarkdown = (text = "") => {
     } else if (currentBlock && currentBlock.indexOf("subquestion:") === 0) {
       const sub = currentQuestion.subquestions[Number(currentBlock.slice("subquestion:".length))];
       const field = parseField(textLine);
-      if (sub.block === "content" && field && ["kind", "points"].includes(field.key)) {
+      if (sub.block === "content" && field && ["kind", "points", "answer_mode"].includes(field.key)) {
         sub.fields[field.key] = {value: field.value, line: lineNo, offset};
         return;
       }
@@ -355,6 +375,33 @@ const leafSubquestions = (nodes) => {
 const hasInlineAnswer = (sub) => normalizeBlock(sub.answerLines).length > 0;
 const hasInlineExplanation = (sub) => normalizeBlock(sub.explanationLines).length > 0;
 
+const validateAnswerBlock = (lines, label, issues, lineStarts) => {
+  const nonempty = lines.filter((line) => line.text.trim());
+  if (!nonempty.length) {
+    addIssue(issues, lineStarts, lines[0] ? lines[0].offset : 0, "error", `${label} 不能为空。`);
+    return;
+  }
+  const firstField = parseField(nonempty[0].text);
+  const modeLine = firstField && firstField.key === "answer_mode" ? nonempty[0] : null;
+  const misplacedMode = nonempty.find((line, index) => {
+    const field = parseField(line.text);
+    return field && field.key === "answer_mode" && index !== 0;
+  });
+  if (misplacedMode) {
+    addIssue(issues, lineStarts, misplacedMode.offset, "error", `${label} 的 answer_mode 必须是第一条非空行。`);
+  }
+  if (!modeLine) return;
+  const mode = parseField(modeLine.text)
+    .value.trim()
+    .toLowerCase();
+  if (!["exact", "reference"].includes(mode)) {
+    addIssue(issues, lineStarts, modeLine.offset, "error", `${label} 的 answer_mode 只能是 exact 或 reference。`);
+  }
+  if (nonempty.length === 1) {
+    addIssue(issues, lineStarts, modeLine.offset, "error", `${label} 写了 answer_mode，但缺少非空答案。`);
+  }
+};
+
 const diagnoseExamMarkdown = (text = "") => {
   const parsed = parseExamMarkdown(text);
   const {issues, lineStarts, sections, questions} = parsed;
@@ -427,6 +474,14 @@ const diagnoseExamMarkdown = (text = "") => {
       const leaves = leafSubquestions(tree.roots);
       const inlineAnswerCount = leaves.filter(hasInlineAnswer).length;
       const inlineExplanationCount = leaves.filter(hasInlineExplanation).length;
+      Object.keys(question.answers).forEach((label) => {
+        validateAnswerBlock(
+          question.answers[label],
+          label === "__single__" ? `Q${question.qNum} 的 Answer` : `Q${question.qNum} 的 Answer (${label})`,
+          issues,
+          lineStarts,
+        );
+      });
       if (question.answers.__single__ && labels.length) {
         addIssue(issues, lineStarts, question.offset, "error", `Q${question.qNum} 不要混用 Answer 和 Answer (n)。`);
       }
@@ -469,6 +524,8 @@ const diagnoseExamMarkdown = (text = "") => {
         const hasChildren = sub.children.length > 0;
         const kind = explicitKind || (hasChildren ? "context" : "question");
         const hasPoints = Boolean(sub.fields.points && sub.fields.points.value);
+        const answerModeField = sub.fields.answer_mode;
+        const answerMode = answerModeField && answerModeField.value.trim().toLowerCase();
         if (explicitKind && !["context", "question"].includes(explicitKind)) {
           addIssue(
             issues,
@@ -509,9 +566,36 @@ const diagnoseExamMarkdown = (text = "") => {
               `kind: context 的小问 (${sub.label}) 不要写 Answer: 或 Explanation:。`,
             );
           }
+          if (answerModeField) {
+            addIssue(
+              issues,
+              lineStarts,
+              answerModeField.offset,
+              "error",
+              `kind: context 的小问 (${sub.label}) 不要写 answer_mode。`,
+            );
+          }
         }
         if (kind === "question" && hasChildren) {
           addIssue(issues, lineStarts, sub.offset, "error", `kind: question 的小问 (${sub.label}) 不能再有子节点。`);
+        }
+        if (answerModeField && !["exact", "reference"].includes(answerMode)) {
+          addIssue(
+            issues,
+            lineStarts,
+            answerModeField.offset,
+            "error",
+            `小问 (${sub.label}) 的 answer_mode 只能是 exact 或 reference。`,
+          );
+        }
+        if (answerModeField && !hasInlineAnswer(sub)) {
+          addIssue(
+            issues,
+            lineStarts,
+            answerModeField.offset,
+            "error",
+            `小问 (${sub.label}) 写了 answer_mode，但缺少非空 Answer:。`,
+          );
         }
       });
 
@@ -546,15 +630,30 @@ const answerPlaceholderFor = (qType, content, label, options = {}) => {
   const explanationTitle = inline ? "Explanation:" : `#### Explanation${label ? ` (${label})` : ""}`;
   if (qType === "fill") {
     const count = Math.max(1, countFillBlanks(content));
-    return [title, ...Array.from({length: count}, (_, index) => `- <!-- TODO: 第 ${index + 1} 空 -->`)].join("\n");
+    return [
+      title,
+      ...(inline ? [] : ["answer_mode: exact"]),
+      ...Array.from({length: count}, (_, index) => `- <!-- TODO: 第 ${index + 1} 空 -->`),
+    ].join("\n");
   }
   if (qType === "true_false") {
-    return [title, "<!-- TODO: true 或 false；如需改正说明，改成多值列表 -->"].join("\n");
+    return [
+      title,
+      ...(inline ? [] : ["answer_mode: exact"]),
+      "<!-- TODO: true 或 false；如需改正说明，改成多值列表 -->",
+    ].join("\n");
   }
   if (["choice", "multiple_choice", "indefinite_choice"].includes(qType)) {
-    return [title, "<!-- TODO: A/B/C/D -->"].join("\n");
+    return [title, ...(inline ? [] : ["answer_mode: exact"]), "<!-- TODO: A/B/C/D -->"].join("\n");
   }
-  return [title, "<!-- TODO: 简短答案；无法压缩时写 见详细解答 -->", "", explanationTitle, "<!-- TODO -->"].join("\n");
+  return [
+    title,
+    ...(inline ? [] : ["answer_mode: reference"]),
+    "<!-- TODO: 完整、可独立展示的参考答案 -->",
+    "",
+    explanationTitle,
+    "<!-- TODO: 来源解析；没有时可省略 Explanation -->",
+  ].join("\n");
 };
 
 const insertAfterLine = (text, lineNo, insertion) => {
@@ -615,6 +714,10 @@ const insertAnswerPlaceholders = (text = "") => {
         [...leaves].reverse().forEach((sub) => {
           const insertion = answerPlaceholderFor(qType, normalizeBlock(sub.lines), sub.label, {inline: true});
           output = insertAfterLine(output, subquestionEndLine(question, sub), `\n${insertion}`);
+          if (qType === "essay" && !sub.fields.answer_mode) {
+            const fieldEndLine = Math.max(sub.line, ...Object.values(sub.fields).map((field) => field.line));
+            output = insertAfterLine(output, fieldEndLine, "answer_mode: reference");
+          }
         });
       } else {
         output = insertAfterLine(
