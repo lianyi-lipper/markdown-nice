@@ -29,7 +29,7 @@ import {
   THROTTLE_MATHJAX_TIME,
   THROTTLE_MD_RENDER_TIME,
 } from "./utils/constant";
-import {markdownParser, updateMathjax} from "./utils/helper";
+import {markdownParser, updateMathjax as typesetMathjax} from "./utils/helper";
 import diagnoseMarkdown from "./utils/markdownDiagnostics";
 import {diagnoseExamMarkdown, insertAnswerPlaceholders} from "./utils/examMarkdownDiagnostics";
 import pluginCenter from "./utils/pluginCenter";
@@ -49,12 +49,13 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.scale = 1;
-    this.handleUpdateMathjax = throttle(updateMathjax, THROTTLE_MATHJAX_TIME);
+    this.handleUpdateMathjax = throttle(() => this.updateMathjax(), THROTTLE_MATHJAX_TIME);
     this.handleThrottleChange = throttle(this.handleChange, THROTTLE_MD_RENDER_TIME);
     this.state = {
       focus: false,
       diagnosticsOpen: false,
       examDiagnosticsOpen: false,
+      latexDiagnostics: [],
     };
   }
 
@@ -204,11 +205,15 @@ class App extends Component {
   handleChange = (editor) => {
     if (this.state.focus) {
       const content = editor.getValue();
+      const contentChanged = content !== this.props.content.content;
       if (content.length > MAX_MD_NUMBER) {
         message.error(`字符数超过 ${MAX_MD_NUMBER}`);
         return;
       }
       this.props.content.setContent(content);
+      if (contentChanged && this.state.latexDiagnostics.length) {
+        this.setState({latexDiagnostics: []});
+      }
       this.props.onTextChange && this.props.onTextChange(content);
     }
   };
@@ -307,6 +312,13 @@ class App extends Component {
     }
   };
 
+  updateMathjax = () => {
+    const typeset = typesetMathjax();
+    if (typeset && typeset.then) {
+      typeset.then(() => this.collectLatexDiagnostics(window.MathJax.startup.document));
+    }
+  };
+
   addContainer(math, doc) {
     const tag = "span";
     const spanClass = math.display ? "span-block-equation" : "span-inline-equation";
@@ -317,6 +329,42 @@ class App extends Component {
     math.typesetRoot = doc.adaptor.node(tag, {class: spanClass, style: "cursor:pointer"}, [math.typesetRoot]);
   }
 
+  collectLatexDiagnostics(doc) {
+    const content = this.props.content.content || "";
+    const diagnostics = [];
+    let searchFrom = 0;
+    for (const math of doc.math) {
+      let detail = "";
+      if (math.root && math.root.walkTree) {
+        math.root.walkTree((node) => {
+          if (!detail && node.attributes && node.attributes.get) {
+            detail = node.attributes.get("data-mjx-error") || "";
+          }
+        });
+      }
+      if (!detail) continue;
+
+      let index = content.indexOf(math.math, searchFrom);
+      if (index === -1) index = content.indexOf(math.math);
+      if (index === -1) continue;
+      searchFrom = index + math.math.length;
+      const before = content.slice(0, index);
+      const lines = before.split("\n");
+      diagnostics.push({
+        line: lines.length,
+        column: lines[lines.length - 1].length + 1,
+        marker: "LaTeX",
+        message: `LaTeX 公式解析失败：${String(detail)
+          .replace(/\s+/g, " ")
+          .slice(0, 180)}`,
+      });
+    }
+
+    if (diagnostics.length && JSON.stringify(diagnostics) !== JSON.stringify(this.state.latexDiagnostics)) {
+      this.setState({latexDiagnostics: diagnostics});
+    }
+  }
+
   render() {
     const {previewType} = this.props.navbar;
     const {isEditAreaOpen, isPreviewAreaOpen, isStyleEditorOpen, isImmersiveEditing} = this.props.view;
@@ -325,7 +373,7 @@ class App extends Component {
 
     const {content} = this.props.content;
     const parseHtml = markdownParser.render(content);
-    const diagnostics = diagnoseMarkdown(content);
+    const diagnostics = [...diagnoseMarkdown(content), ...this.state.latexDiagnostics].slice(0, 20);
     const examDiagnostics = isExamDiagnosticsEnabled ? diagnoseExamMarkdown(content) : [];
     const diagnosticsToggleText = `可能的 Markdown 渲染问题（${diagnostics.length}）${
       this.state.diagnosticsOpen ? "收起" : "展开"
