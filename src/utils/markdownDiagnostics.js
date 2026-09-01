@@ -1,3 +1,5 @@
+import katex from "katex";
+
 const MAX_DIAGNOSTICS = 20;
 
 const isEscaped = (text, index) => {
@@ -109,6 +111,33 @@ const getDollarDelimiter = (text, index) => {
   return text[index + 1] === "$" ? "$$" : "$";
 };
 
+const diagnoseLatex = (text, start, end, lineStarts, diagnostics) => {
+  const latex = text.slice(start, end);
+  if (!latex.trim()) {
+    return;
+  }
+  const htmlTagLikeMatch = latex.match(/<[A-Za-z]/);
+  if (htmlTagLikeMatch) {
+    addDiagnostic(
+      diagnostics,
+      lineStarts,
+      start + htmlTagLikeMatch.index,
+      "公式中的 < 后面紧跟字母，预览会把它误当成 HTML 标签；请在 < 后加一个空格。",
+      "<",
+    );
+  }
+  try {
+    katex.renderToString(latex, {throwOnError: true});
+  } catch (error) {
+    const detail = String((error && error.message) || "未知语法错误")
+      .replace(/^KaTeX parse error:\s*/i, "")
+      .replace(/\s+/g, " ")
+      .slice(0, 180);
+    const errorOffset = error && Number.isInteger(error.position) ? error.position : 0;
+    addDiagnostic(diagnostics, lineStarts, start + errorOffset, `LaTeX 公式解析失败：${detail}`, "LaTeX");
+  }
+};
+
 const diagnoseMath = (text, mask, lineStarts, diagnostics) => {
   const inlineStack = [];
   const blockStack = [];
@@ -134,7 +163,8 @@ const diagnoseMath = (text, mask, lineStarts, diagnostics) => {
 
     if (delimiter === "$$") {
       if (blockStack.length) {
-        blockStack.pop();
+        const start = blockStack.pop();
+        diagnoseLatex(text, start + 2, index, lineStarts, diagnostics);
       } else {
         blockStack.push(index);
       }
@@ -172,7 +202,8 @@ const diagnoseMath = (text, mask, lineStarts, diagnostics) => {
       inlineStack.pop();
       continue;
     }
-    inlineStack.pop();
+    const start = inlineStack.pop();
+    diagnoseLatex(text, start + 1, index, lineStarts, diagnostics);
   }
 
   inlineStack.forEach((index) => {
