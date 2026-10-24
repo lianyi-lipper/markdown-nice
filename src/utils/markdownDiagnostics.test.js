@@ -1,3 +1,4 @@
+/* eslint-env jest */
 const fs = require("fs");
 const path = require("path");
 const source = fs
@@ -7,20 +8,12 @@ const source = fs
 const diagnoseMarkdown = Function(source)();
 
 describe("markdown diagnostics LaTeX validation", () => {
-  test("reports a less-than sign that the preview mistakes for an HTML tag", () => {
+  test("accepts less-than signs now that math output is HTML-escaped", () => {
     const content = ["可得", "", "$$", "x_0 <a+\\sqrt{3-\\frac1{a^2}}<0.", "$$", "", "所以"].join("\n");
 
     const diagnostics = diagnoseMarkdown(content);
 
-    expect(diagnostics).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          line: 4,
-          marker: "<",
-          message: expect.stringContaining("误当成 HTML 标签"),
-        }),
-      ]),
-    );
+    expect(diagnostics).toEqual([]);
   });
 
   test("accepts valid inline and block LaTeX", () => {
@@ -31,5 +24,15 @@ describe("markdown diagnostics LaTeX validation", () => {
 
   test("does not validate dollar signs inside code", () => {
     expect(diagnoseMarkdown("`$\\notACommand{$`\n```\n$$\\bad{$$\n```")).toEqual([]);
+  });
+
+  test("accepts bold text next to normal paragraph and list spacing", () => {
+    expect(diagnoseMarkdown("**使用方式：** 正文\n\n- **集合与元素**：正文\n\n这是 **重点** 内容。")).toEqual([]);
+  });
+
+  test("still reports spaces inside bold delimiters", () => {
+    expect(diagnoseMarkdown("** 错误**")[0].message).toContain("起始 ** 后面是空格");
+    expect(diagnoseMarkdown("**错误 **")[0].message).toContain("结束 ** 前面是空格");
+    expect(diagnoseMarkdown("**未闭合")[0].message).toContain("未闭合");
   });
 });

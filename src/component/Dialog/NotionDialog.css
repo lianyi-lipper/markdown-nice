@@ -1,0 +1,6 @@
+.nice-notion-import label[for] {display:block;margin:12px 0 6px;font-weight:500;}
+.nice-notion-import .nice-notion-remember {display:block;margin:12px 0 0;font-weight:400;}
+.nice-notion-import .ant-alert {margin:14px 0;}
+.nice-notion-import .nice-notion-help {font-size:12px;color:#777;margin:10px 0 16px;line-height:1.7;}
+.nice-notion-import input[type="file"] {max-width:100%;}
+#nice-menu-import-notion {border:0;background:transparent;color:inherit;font:inherit;cursor:pointer;text-align:left;}

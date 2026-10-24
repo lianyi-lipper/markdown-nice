@@ -35,6 +35,7 @@ import {diagnoseExamMarkdown, insertAnswerPlaceholders} from "./utils/examMarkdo
 import pluginCenter from "./utils/pluginCenter";
 import appContext from "./utils/appContext";
 import {uploadAdaptor} from "./utils/imageHosting";
+import {resolveLocalImages} from "./utils/localImages";
 import bindHotkeys, {betterTab, rightClick} from "./utils/hotkey";
 import {message} from "antd";
 
@@ -372,7 +373,7 @@ class App extends Component {
     const {isSearchOpen} = this.props.dialog;
 
     const {content} = this.props.content;
-    const parseHtml = markdownParser.render(content);
+    const parseHtml = markdownParser.render(resolveLocalImages(content));
     const diagnostics = [...diagnoseMarkdown(content), ...this.state.latexDiagnostics].slice(0, 20);
     const examDiagnostics = isExamDiagnosticsEnabled ? diagnoseExamMarkdown(content) : [];
     const diagnosticsToggleText = `可能的 Markdown 渲染问题（${diagnostics.length}）${

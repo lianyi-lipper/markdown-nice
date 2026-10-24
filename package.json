@@ -32,6 +32,7 @@
     "antd": "^3.15.1",
     "axios": "^0.18.0",
     "diff-match-patch": "^1.0.4",
+    "dompurify": "3.4.17",
     "highlight.js": "^9.15.6",
     "juice": "^5.2.0",
     "lodash.debounce": "^4.0.8",

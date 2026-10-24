@@ -17,6 +17,13 @@ class Dialog {
 
   @observable isSitDownOpen = false;
 
+  @observable isNotionOpen = false;
+
+  @action
+  setNotionOpen = (isNotionOpen) => {
+    this.isNotionOpen = isNotionOpen;
+  };
+
   @action
   setImageOpen = (isImageOpen) => {
     this.isImageOpen = isImageOpen;

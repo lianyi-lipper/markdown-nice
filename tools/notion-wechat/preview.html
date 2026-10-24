@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>@@TITLE@@ · 公众号排版预览</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f1f0ec;color:#37352f;font-family:"Microsoft YaHei",sans-serif}
+header{position:sticky;top:0;z-index:2;background:#fffefbf5;border-bottom:1px solid #dedbd2;padding:16px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+header strong{font-size:16px}button{cursor:pointer;border:1px solid #ccc8bd;border-radius:6px;background:white;padding:10px 16px;color:#37352f;font:inherit;font-size:14px}
+button.primary{background:#276453;color:white;border-color:#276453}#status{font-size:13px;color:#5b635a}
+main{max-width:860px;margin:28px auto;padding:0 16px}.tip{font-size:13px;line-height:1.8;color:#787774;margin:16px 0}
+#preview{background:white;padding:36px 48px;border:1px solid #e3e1db;border-radius:8px}#preview.mobile{max-width:390px;padding:20px;margin:auto}
+#paste-test{background:white;border:1px dashed #bbb;padding:16px;min-height:120px;margin-top:16px;overflow-wrap:anywhere}
+details.test{margin:24px 0}summary{cursor:pointer;font-size:14px}#paste-result{font-size:13px;color:#276453}
+@media(max-width:600px){header{padding:12px}#preview{padding:24px 20px}main{margin:16px auto}}
+</style></head><body>
+<header><strong>Notion → 公众号</strong><button class="primary" id="copy">复制到公众号</button><button id="download">下载正文 HTML</button><button id="width">手机宽度预览</button><span id="status" role="status">就绪 · SVG 矢量公式</span></header>
+<main><p class="tip">全文保留，折叠备注已展开。复制后在公众号正文区粘贴；请检查图片上传、保存及重新打开后的效果。</p>
+<div id="preview">@@ARTICLE@@</div>
+<details class="test"><summary>本地粘贴检查</summary><p class="tip">点击“复制到公众号”，再在下面按 Ctrl+V，可检查富文本剪贴板。此检查不代表公众号兼容性验证。</p><div id="paste-test" contenteditable="true" role="textbox" aria-label="粘贴检查区"></div><p id="paste-result" role="status"></p></details>
+<p class="tip">转换统计：@@STATS@@</p></main>
+<script>
+const article=document.querySelector('#preview article');
+const status=document.getElementById('status');
+document.getElementById('copy').onclick=async()=>{
+ const content=article.outerHTML;
+ const legacyCopy=()=>{
+  // Use Markdown Nice's copy-event path, including an actual selected input.
+  const input=document.createElement('input');
+  input.value='COPY';input.style.cssText='position:fixed;left:-1000px;top:0';
+  document.body.appendChild(input);input.focus();input.select();
+  let copied=false;
+  const listener=e=>{e.preventDefault();e.clipboardData.setData('text/html',content);e.clipboardData.setData('text/plain',article.innerText);copied=true};
+  document.addEventListener('copy',listener);
+  try {if(!document.execCommand('copy')||!copied)throw Error('复制未成功')}finally{document.removeEventListener('copy',listener);input.remove();document.getElementById('copy').focus()}
+ };
+ try {
+  try{legacyCopy()}catch(error){
+   if(!navigator.clipboard||!window.ClipboardItem)throw error;
+   await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([content],{type:'text/html'}),'text/plain':new Blob([article.innerText],{type:'text/plain'})})]);
+  }
+  status.textContent='已复制正文、公式和图片，请到公众号粘贴';
+ }catch(error){status.textContent='复制失败：'+error.message+'。请在浏览器中打开本文件重试。'}
+};
+document.getElementById('width').onclick=()=>{const p=document.getElementById('preview');p.classList.toggle('mobile');document.getElementById('width').textContent=p.classList.contains('mobile')?'恢复宽屏预览':'手机宽度预览'};
+document.getElementById('download').onclick=()=>{const url=URL.createObjectURL(new Blob([article.outerHTML],{type:'text/html;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=document.title+'.html';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
+function checkClipboard(raw){const doc=new DOMParser().parseFromString(raw,'text/html');document.getElementById('paste-result').textContent='收到富文本 '+raw.length+' 字符；图片 '+doc.querySelectorAll('img').length+' 张；内嵌图片 '+doc.querySelectorAll('img[src^="data:image/"]').length+' 张；SVG 公式 '+doc.querySelectorAll('svg[data-formula]').length+' 处。'}
+document.getElementById('paste-test').addEventListener('paste',e=>checkClipboard(e.clipboardData.getData('text/html')));
+</script></body></html>

@@ -10,6 +10,7 @@ export const MJX_DATA_FORMULA = "data-formula";
 export const MJX_DATA_FORMULA_TYPE = "data-formula-type";
 
 export const CONTENT = "content";
+export const LOCAL_IMAGES = "local_images";
 export const STYLE = "style";
 export const TEMPLATE_NUM = "template_num";
 export const CODE_NUM = "code_num";

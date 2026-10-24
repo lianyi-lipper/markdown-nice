@@ -6,6 +6,7 @@ import markdownItImplicitFigures from "markdown-it-implicit-figures";
 import markdownItTableOfContents from "markdown-it-table-of-contents";
 import markdownItRuby from "markdown-it-ruby";
 import markdownItImsize from "markdown-it-imsize";
+import markdownItSvgData from "./markdown-it-svg-data";
 
 import markdownItSpan from "./markdown-it-span";
 import markdownItTableContainer from "./markdown-it-table-container";
@@ -83,7 +84,8 @@ markdownParser
   .use(markdownItLiReplacer) // li 标签中加入 p 标签
   .use(markdownItImageFlow) // 横屏移动插件
   .use(markdownItMultiquote) // 给多级引用加 class
-  .use(markdownItImsize);
+  .use(markdownItImsize)
+  .use(markdownItSvgData);
 
 export const replaceStyle = (id, css) => {
   const style = document.getElementById(id);

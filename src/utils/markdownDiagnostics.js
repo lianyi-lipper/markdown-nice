@@ -109,23 +109,6 @@ const getDollarDelimiter = (text, index) => {
   return text[index + 1] === "$" ? "$$" : "$";
 };
 
-const diagnoseLatexRenderingHazards = (text, start, end, lineStarts, diagnostics) => {
-  const latex = text.slice(start, end);
-  if (!latex.trim()) {
-    return;
-  }
-  const htmlTagLikeMatch = latex.match(/<[A-Za-z]/);
-  if (htmlTagLikeMatch) {
-    addDiagnostic(
-      diagnostics,
-      lineStarts,
-      start + htmlTagLikeMatch.index,
-      "公式中的 < 后面紧跟字母，预览会把它误当成 HTML 标签；请在 < 后加一个空格。",
-      "<",
-    );
-  }
-};
-
 const diagnoseMath = (text, mask, lineStarts, diagnostics) => {
   const inlineStack = [];
   const blockStack = [];
@@ -151,8 +134,7 @@ const diagnoseMath = (text, mask, lineStarts, diagnostics) => {
 
     if (delimiter === "$$") {
       if (blockStack.length) {
-        const start = blockStack.pop();
-        diagnoseLatexRenderingHazards(text, start + 2, index, lineStarts, diagnostics);
+        blockStack.pop();
       } else {
         blockStack.push(index);
       }
@@ -190,8 +172,7 @@ const diagnoseMath = (text, mask, lineStarts, diagnostics) => {
       inlineStack.pop();
       continue;
     }
-    const start = inlineStack.pop();
-    diagnoseLatexRenderingHazards(text, start + 1, index, lineStarts, diagnostics);
+    inlineStack.pop();
   }
 
   inlineStack.forEach((index) => {
@@ -217,20 +198,18 @@ const diagnoseEmphasis = (text, mask, lineStarts, diagnostics) => {
 
     const prev = index > 0 ? text[index - 1] : "";
     const next = text[index + 2] || "";
-    if (next === " " || next === "\t") {
+    if (strongStack.length) {
+      if (prev === " " || prev === "\t") {
+        addDiagnostic(diagnostics, lineStarts, index, "加粗结束 ** 前面是空格，可能不会按预期加粗。", "**");
+      }
+      strongStack.pop();
+    } else if (next === " " || next === "\t") {
       addDiagnostic(diagnostics, lineStarts, index, "加粗起始 ** 后面是空格，可能不会按预期加粗。", "**");
       const nextDelimiter = text.indexOf("**", index + 2);
       const nextLineBreak = text.indexOf("\n", index + 2);
       if (nextDelimiter !== -1 && (nextLineBreak === -1 || nextDelimiter < nextLineBreak)) {
         ignoredStrongDelimiters[nextDelimiter] = true;
       }
-    } else if (prev === " " || prev === "\t") {
-      addDiagnostic(diagnostics, lineStarts, index, "加粗结束 ** 前面是空格，可能不会按预期加粗。", "**");
-      if (strongStack.length) {
-        strongStack.pop();
-      }
-    } else if (strongStack.length) {
-      strongStack.pop();
     } else {
       strongStack.push(index);
     }

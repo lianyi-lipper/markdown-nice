@@ -4,6 +4,7 @@ import {Menu, Dropdown} from "antd";
 import ExportMarkdown from "./File/ExportMarkdown";
 import ExportPdf from "./File/ExportPdf";
 import ImportFile from "./File/ImportFile";
+import ImportNotion from "./File/ImportNotion";
 import "./common.css";
 
 const menu = (
@@ -16,6 +17,9 @@ const menu = (
     </Menu.Item>
     <Menu.Item>
       <ImportFile />
+    </Menu.Item>
+    <Menu.Item>
+      <ImportNotion />
     </Menu.Item>
   </Menu>
 );
