@@ -15,6 +15,7 @@ import markdownItImageFlow from "./markdown-it-imageflow";
 import markdownItMultiquote from "./markdown-it-multiquote";
 import highlightjs from "./langHighlight";
 import markdownItLiReplacer from "./markdown-it-li";
+import withMathjax from "./mathjaxQueue";
 
 export const axiosGithub = axios.create({
   baseURL: "https://api.github.com",
@@ -223,11 +224,12 @@ export const addStyleLabel = (styleLabels) => {
   styleLabels.forEach((name) => add(name));
 };
 
-export const updateMathjax = () => {
-  window.MathJax.texReset();
-  window.MathJax.typesetClear();
-  return window.MathJax.typesetPromise();
-};
+export const updateMathjax = () =>
+  withMathjax((mathjax) => {
+    mathjax.texReset();
+    mathjax.typesetClear();
+    return mathjax.typesetPromise();
+  });
 
 export const download = (content, filename) => {
   const eleLink = document.createElement("a");

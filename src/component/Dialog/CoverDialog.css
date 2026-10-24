@@ -1,0 +1,221 @@
+.nice-cover-dialog {
+  max-width: calc(100vw - 32px);
+}
+.nice-cover-dialog .ant-modal-body {
+  padding: 18px 24px;
+}
+.nice-cover-help {
+  margin-bottom: 14px;
+  color: #666;
+}
+.nice-cover-editors {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.nice-cover-editor {
+  min-width: 0;
+}
+.nice-cover-editor h3 {
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 500;
+}
+.nice-cover-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.nice-cover-source {
+  resize: vertical;
+  min-height: 110px;
+  font-family: Consolas, "Microsoft YaHei", monospace;
+}
+.nice-cover-settings {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-top: 10px;
+}
+.nice-cover-control {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.nice-cover-control label {
+  color: #666;
+  font-size: 12px;
+}
+.nice-cover-control .ant-input-number {
+  width: 70px;
+}
+.nice-cover-control select {
+  width: 76px;
+  padding: 4px 6px;
+}
+.nice-cover-file {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 7px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  cursor: pointer;
+  background: white;
+}
+.nice-cover-file:focus-within {
+  outline: 2px solid #1890ff;
+  outline-offset: 2px;
+}
+.nice-cover-file input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.nice-cover-file.is-disabled {
+  color: #aaa;
+  cursor: not-allowed;
+}
+.nice-cover-preview-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 20px 0 8px;
+}
+.nice-cover-preview-heading span:last-child {
+  font-size: 12px;
+  color: #888;
+}
+.nice-cover-preview {
+  width: 100%;
+  overflow: hidden;
+  outline: 1px solid #ddd;
+  background: #fff;
+}
+.nice-cover-sheet {
+  width: 1340px;
+  height: 400px;
+  display: flex;
+  background: #fff;
+  transform-origin: top left;
+}
+.nice-cover-canvas {
+  height: 400px;
+  flex: none;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+  color: #222;
+  font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+}
+.nice-cover-content {
+  flex: none;
+  width: 100%;
+  overflow-wrap: break-word;
+}
+.nice-cover-content p,
+.nice-cover-content blockquote,
+.nice-cover-content ul,
+.nice-cover-content ol,
+.nice-cover-content pre,
+.nice-cover-content table {
+  margin: 0 0 0.55em;
+}
+.nice-cover-content > :last-child {
+  margin-bottom: 0;
+}
+.nice-cover-content h1,
+.nice-cover-content h2,
+.nice-cover-content h3,
+.nice-cover-content h4,
+.nice-cover-content h5,
+.nice-cover-content h6 {
+  font-size: 1.15em;
+  line-height: inherit;
+  color: inherit;
+  margin: 0 0 0.55em;
+}
+.nice-cover-content ul,
+.nice-cover-content ol {
+  padding-left: 1.5em;
+}
+.nice-cover-content blockquote {
+  padding-left: 0.7em;
+  border-left: 3px solid #ccc;
+}
+.nice-cover-content img {
+  max-width: var(--cover-image-width);
+  max-height: var(--cover-image-height);
+  width: auto;
+  height: auto;
+  vertical-align: middle;
+  object-fit: contain;
+}
+.nice-cover-content table {
+  border-collapse: collapse;
+  max-width: 100%;
+  font: inherit;
+}
+.nice-cover-content th,
+.nice-cover-content td {
+  border: 1px solid #aaa;
+  padding: 0.15em 0.4em;
+}
+.nice-cover-content pre {
+  white-space: pre-wrap;
+}
+.nice-cover-content .span-block-equation {
+  display: block;
+}
+.nice-cover-content mjx-container[display="true"] {
+  display: block;
+  margin: 0.4em 0;
+  text-align: inherit;
+  overflow: visible;
+}
+.nice-cover-content mjx-container svg {
+  max-width: none;
+}
+.nice-cover-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1px dashed #aaa;
+  pointer-events: none;
+}
+.nice-cover-preview-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  color: #888;
+  font-size: 12px;
+}
+.nice-cover-export-size {
+  margin-right: 16px;
+  color: #888;
+  font-size: 12px;
+}
+.nice-cover-dialog .ant-alert {
+  margin-top: 12px;
+}
+@media (max-width: 760px) {
+  .nice-cover-dialog .ant-modal-body {
+    padding: 14px;
+  }
+  .nice-cover-editors {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .nice-cover-preview-heading,
+  .nice-cover-preview-labels {
+    flex-wrap: wrap;
+  }
+}

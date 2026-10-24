@@ -34,6 +34,7 @@
     "diff-match-patch": "^1.0.4",
     "dompurify": "3.4.17",
     "highlight.js": "^9.15.6",
+    "html-to-image": "1.11.13",
     "juice": "^5.2.0",
     "lodash.debounce": "^4.0.8",
     "lodash.throttle": "^4.1.1",

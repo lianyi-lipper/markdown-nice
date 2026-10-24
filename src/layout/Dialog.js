@@ -7,6 +7,7 @@ import FormDialog from "../component/Dialog/FormDialog";
 import HistoryDialog from "../component/Dialog/HistoryDialog";
 import SitDownDialog from "../component/Dialog/SitDownDialog";
 import NotionDialog from "../component/Dialog/NotionDialog";
+import CoverDialog from "../component/Dialog/CoverDialog";
 
 class Dialog extends Component {
   render() {
@@ -20,6 +21,7 @@ class Dialog extends Component {
         <HistoryDialog />
         <SitDownDialog />
         <NotionDialog />
+        <CoverDialog />
       </div>
     );
   }

@@ -19,6 +19,13 @@ class Dialog {
 
   @observable isNotionOpen = false;
 
+  @observable isCoverOpen = false;
+
+  @action
+  setCoverOpen = (isCoverOpen) => {
+    this.isCoverOpen = isCoverOpen;
+  };
+
   @action
   setNotionOpen = (isNotionOpen) => {
     this.isNotionOpen = isNotionOpen;

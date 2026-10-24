@@ -5,6 +5,26 @@
   padding: 5px 12px 5px 6px;
 }
 
+button.nice-menu-item {
+  appearance: none;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+button.nice-menu-item:focus:not(:focus-visible) {
+  outline: none;
+}
+
+button.nice-menu-item:focus-visible {
+  outline: 2px solid #1890ff;
+  outline-offset: -2px;
+}
+
 .nice-menu-shortcut {
   color: gray;
 }

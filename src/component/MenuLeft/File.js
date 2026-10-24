@@ -5,6 +5,7 @@ import ExportMarkdown from "./File/ExportMarkdown";
 import ExportPdf from "./File/ExportPdf";
 import ImportFile from "./File/ImportFile";
 import ImportNotion from "./File/ImportNotion";
+import CreateCover from "./File/CreateCover";
 import "./common.css";
 
 const menu = (
@@ -14,6 +15,9 @@ const menu = (
     </Menu.Item>
     <Menu.Item>
       <ExportPdf />
+    </Menu.Item>
+    <Menu.Item>
+      <CreateCover />
     </Menu.Item>
     <Menu.Item>
       <ImportFile />
