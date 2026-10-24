@@ -6,6 +6,7 @@ import {solveWeChatMath, solveHtml, copySafari} from "../../utils/converter";
 import {LAYOUT_ID, ENTER_DELAY, LEAVE_DELAY} from "../../utils/constant";
 import SvgIcon from "../../icon";
 import "./Wechat.css";
+import {compatibleImages} from "../../utils/compatibleImages";
 
 @inject("content")
 @inject("navbar")
@@ -18,14 +19,26 @@ class Wechat extends Component {
     this.html = "";
   }
 
-  copyWechat = () => {
+  copyWechat = async () => {
+    if (this.copying) return;
+    this.copying = true;
     const layout = document.getElementById(LAYOUT_ID); // 保护现场
     const html = layout.innerHTML;
-    solveWeChatMath();
-    this.html = solveHtml();
-    copySafari(this.html);
-    message.success("已复制，请到微信公众平台粘贴");
-    layout.innerHTML = html; // 恢复现场
+    try {
+      try {
+        solveWeChatMath();
+        this.html = solveHtml();
+      } finally {
+        layout.innerHTML = html; // 在异步转换前恢复现场
+      }
+      this.html = await compatibleImages(this.html);
+      copySafari(this.html);
+      message.success("已复制，请到微信公众平台粘贴");
+    } catch (error) {
+      message.error("图片转换失败，未复制：" + error.message);
+    } finally {
+      this.copying = false;
+    }
   };
 
   render() {

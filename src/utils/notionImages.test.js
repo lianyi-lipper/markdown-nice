@@ -1,5 +1,5 @@
 /* eslint-env jest */
-const {imageUrl, loadNotionImage} = require("./notionImages");
+const {imageUrl, loadNotionImage, normalizeImageFile} = require("./notionImages");
 const PNG =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jFzQAAAAASUVORK5CYII=";
 const originalFetch = global.fetch;
@@ -66,7 +66,7 @@ test("fetches remote images without credentials and converts them in the browser
     ok: true,
     headers: {get: () => null},
     body: null,
-    blob: async () => new Blob(["fake PNG bytes"], {type: "image/png"}),
+    blob: async () => new Blob([Uint8Array.from(atob(PNG.split(",")[1]), (c) => c.charCodeAt(0))], {type: "image/png"}),
   });
   await expect(loadNotionImage("https://example.com/image.png")).resolves.toBe(PNG);
   expect(global.fetch.mock.calls[0][1]).toMatchObject({
@@ -85,7 +85,7 @@ test("rejects oversized downloads before decoding and propagates CORS failures",
   await expect(loadNotionImage("https://example.com/image.png")).rejects.toThrow("CORS");
 });
 
-test("downloads SVG and keeps SVG bytes instead of drawing a PNG canvas", async () => {
+test("downloads SVG and converts it to PNG", async () => {
   const source =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><text>半圆</text><path d="M0 0L30 20"/></svg>';
   global.fetch.mockResolvedValue({
@@ -95,9 +95,8 @@ test("downloads SVG and keeps SVG bytes instead of drawing a PNG canvas", async 
     blob: async () => new Blob([source], {type: "image/svg+xml;charset=utf-8"}),
   });
   const result = await loadNotionImage("https://example.com/diagram.svg");
-  expect(result).toMatch(/^data:image\/svg\+xml;base64,/);
-  expect(Buffer.from(result.split(",")[1], "base64").toString("utf8")).toContain("半圆");
-  expect(HTMLCanvasElement.prototype.toDataURL).not.toHaveBeenCalled();
+  expect(result).toBe(PNG);
+  expect(HTMLCanvasElement.prototype.toDataURL).toHaveBeenCalledWith("image/png");
 });
 
 test("accepts embedded SVG, sanitizes it and validates its display dimensions", async () => {
@@ -105,11 +104,9 @@ test("accepts embedded SVG, sanitizes it and validates its display dimensions", 
     '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="20" onload="alert(1)"><text>中文</text></svg>';
   const input = "data:image/svg+xml;base64," + Buffer.from(source).toString("base64");
   const result = await loadNotionImage(input);
-  const svg = Buffer.from(result.split(",")[1], "base64").toString("utf8");
-  expect(svg).toContain("中文");
-  expect(svg).not.toContain("onload");
+  expect(result).toBe(PNG);
   expect(global.fetch).not.toHaveBeenCalled();
-  expect(HTMLCanvasElement.prototype.toDataURL).not.toHaveBeenCalled();
+  expect(HTMLCanvasElement.prototype.toDataURL).toHaveBeenCalledWith("image/png");
   global.Image = class {
     constructor() {
       this.naturalWidth = 100000;
@@ -120,4 +117,28 @@ test("accepts embedded SVG, sanitizes it and validates its display dimensions", 
     }
   };
   await expect(loadNotionImage(input)).rejects.toThrow("尺寸过大");
+});
+
+test("preserves every supported format without flattening animated images", async () => {
+  for (const type of ["bmp", "png", "jpeg", "jpg", "gif", "webp"]) {
+    const input = "data:image/" + type + ";base64,YWJj";
+    // eslint-disable-next-line no-await-in-loop
+    expect(await loadNotionImage(input)).toBe(input);
+  }
+  expect(HTMLCanvasElement.prototype.toDataURL).not.toHaveBeenCalled();
+});
+
+test("converts other decodable formats with matching PNG filename and MIME", async () => {
+  const file = await normalizeImageFile(new File(["avif"], "diagram.avif", {type: "image/avif"}));
+  expect(file.name).toBe("diagram.png");
+  expect(file.type).toBe("image/png");
+});
+
+test("rejects undecodable images instead of passing the original through", async () => {
+  global.Image = class {
+    set src(value) {
+      if (value) this.onerror();
+    }
+  };
+  await expect(normalizeImageFile(new File(["bad"], "diagram.heic", {type: "image/heic"}))).rejects.toThrow("无法解码");
 });

@@ -15,6 +15,8 @@ import {
   IMAGE_HOSTING_NAMES,
 } from "./constant";
 import {toBlob, getOSSName} from "./helper";
+import {createLocalImageId, localImageUrl, saveLocalImage} from "./localImages";
+import {normalizeImageFile} from "./notionImages";
 
 function showUploadNoti() {
   message.loading("图片上传中", 0);
@@ -42,6 +44,42 @@ function writeToEditor({content, image}) {
   markdownEditor.replaceSelection(text, cursor);
   content.setContent(markdownEditor.getValue());
 }
+
+export const writeLocalImageToEditor = async ({file, content}) => {
+  if (!file || !file.type || !file.type.startsWith("image/") || !content) {
+    return false;
+  }
+
+  try {
+    file = await normalizeImageFile(file);
+  } catch (error) {
+    uploadError(error.message);
+    return false;
+  }
+  const reader = new FileReader();
+  reader.readAsDataURL(file);
+  reader.onload = (event) => {
+    const names = file.name ? file.name.split(".") : [];
+    if (names.length) {
+      names.pop();
+    }
+    const id = createLocalImageId();
+    const image = {
+      filename: names.join("."),
+      url: localImageUrl(id),
+    };
+    saveLocalImage({
+      id,
+      dataUrl: event.target.result,
+      filename: image.filename,
+    });
+    writeToEditor({content, image});
+  };
+  reader.onerror = () => {
+    uploadError("图片读取失败");
+  };
+  return true;
+};
 
 // 用户自定义的图床上传
 export const customImageUpload = async ({
@@ -318,7 +356,16 @@ export const githubUpload = ({
 };
 
 // 自动检测上传配置，进行上传
-export const uploadAdaptor = (...args) => {
+export const uploadAdaptor = async (options) => {
+  let file;
+  try {
+    file = await normalizeImageFile(options.file);
+  } catch (error) {
+    uploadError(error.message);
+    if (options.onError) options.onError(error, error.message);
+    return false;
+  }
+  const args = [{...options, file}];
   const type = localStorage.getItem(IMAGE_HOSTING_TYPE); // 阿里云 | Gitee | GitHub | 用户自定义图床
   const userType = imageHosting.hostingName;
   if (type === userType) {

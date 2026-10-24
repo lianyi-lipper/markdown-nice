@@ -3,7 +3,8 @@ const {sanitizeNotionSvg} = require("./notionSvg");
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const MAX_IMAGE_PIXELS = 40000000;
-const DATA_IMAGE = /^data:image\/(png|jpeg|gif|webp|svg\+xml);base64,/i;
+const DATA_IMAGE = /^data:image\/[a-z0-9.+-]+;base64,/i;
+const SUPPORTED_TYPE = /^image\/(bmp|x-ms-bmp|png|jpeg|jpg|gif|webp)(?:;|$)/i;
 const SVG_TYPE = /^image\/svg\+xml(?:;|$)/i;
 
 function imageUrl(value) {
@@ -83,7 +84,7 @@ async function readImageBytes(response) {
   return new Blob(chunks, {type: response.headers.get("content-type") || "application/octet-stream"});
 }
 
-function decodeImage(dataUrl, keepSvg = false) {
+function decodeImage(dataUrl, preserve = false) {
   return new Promise((resolve, reject) => {
     const image = new Image();
     const timer = setTimeout(() => {
@@ -92,7 +93,7 @@ function decodeImage(dataUrl, keepSvg = false) {
     }, 15000);
     image.onerror = () => {
       clearTimeout(timer);
-      reject(new Error("图片无法解码，请检查 SVG、PNG、JPEG、GIF 或 WebP 文件是否完整。"));
+      reject(new Error("浏览器无法解码此图片，请先将其转换为 PNG、JPEG、BMP、GIF 或 WebP。"));
     };
     image.onload = () => {
       clearTimeout(timer);
@@ -100,7 +101,7 @@ function decodeImage(dataUrl, keepSvg = false) {
         reject(new Error("图片尺寸过大或无效。"));
         return;
       }
-      if (keepSvg) {
+      if (preserve) {
         resolve(dataUrl);
         return;
       }
@@ -120,11 +121,30 @@ function decodeImage(dataUrl, keepSvg = false) {
   });
 }
 
-async function preserveSvg(blob) {
+async function convertSvg(blob) {
   const clean = sanitizeNotionSvg(await readBlob(blob, true));
   const sanitized = new Blob([clean], {type: "image/svg+xml"});
   if (sanitized.size > MAX_IMAGE_BYTES) throw new Error("SVG 图片不能超过 10 MB。");
-  return decodeImage(await readBlob(sanitized), true);
+  return decodeImage(await readBlob(sanitized));
+}
+
+async function normalizeImageBlob(blob) {
+  if (blob.size > MAX_IMAGE_BYTES) throw new Error("单张图片不能超过 10 MB。");
+  if (SVG_TYPE.test(blob.type)) return convertSvg(blob);
+  if (!/^image\//i.test(blob.type)) throw new Error("请选择图片文件。");
+  return decodeImage(await readBlob(blob), SUPPORTED_TYPE.test(blob.type));
+}
+
+async function normalizeImageFile(file) {
+  const dataUrl = await normalizeImageBlob(file);
+  const type = dataUrl.slice(5, dataUrl.indexOf(";"));
+  const extension = type
+    .split("/")[1]
+    .replace("x-ms-bmp", "bmp")
+    .replace("jpeg", "jpg");
+  const stem = (file.name || "image").replace(/\.[^.]+$/, "");
+  const bytes = Uint8Array.from(atob(dataUrl.split(",")[1]), (char) => char.charCodeAt(0));
+  return new File([bytes], stem + "." + extension, {type, lastModified: file.lastModified});
 }
 
 async function loadNotionImage(value) {
@@ -136,9 +156,9 @@ async function loadNotionImage(value) {
     }
     if (/^data:image\/svg\+xml;/i.test(src)) {
       const bytes = Uint8Array.from(atob(data), (char) => char.charCodeAt(0));
-      return preserveSvg(new Blob([bytes], {type: "image/svg+xml"}));
+      return convertSvg(new Blob([bytes], {type: "image/svg+xml"}));
     }
-    return decodeImage(src);
+    return decodeImage(src, SUPPORTED_TYPE.test(src.slice(5, src.indexOf(";"))));
   }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 30000);
@@ -153,14 +173,10 @@ async function loadNotionImage(value) {
     });
     if (!response.ok) throw new Error("图片读取失败。");
     const blob = await readImageBytes(response);
-    if (SVG_TYPE.test(blob.type)) return await preserveSvg(blob);
-    if (!/^image\/(png|jpeg|gif|webp)(?:;|$)/i.test(blob.type)) {
-      throw new Error("图片格式不受支持。");
-    }
-    return await decodeImage(await readBlob(blob));
+    return await normalizeImageBlob(blob);
   } finally {
     clearTimeout(timer);
   }
 }
 
-module.exports = {loadNotionImage, imageUrl};
+module.exports = {loadNotionImage, imageUrl, normalizeImageBlob, normalizeImageFile};

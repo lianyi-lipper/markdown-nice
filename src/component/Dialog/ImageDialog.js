@@ -125,12 +125,13 @@ class ImageDialog extends Component {
           {({useImageHosting}) => (
             <Tabs tabBarExtraContent={imageHostingSwitch} type="card">
               <TabPane tab="图片上传" key="1">
-                <Dragger name="file" multiple customRequest={this.customRequest}>
+                <Dragger name="file" accept="image/*" multiple customRequest={this.customRequest}>
                   <p className="ant-upload-drag-icon">
                     <SvgIcon name="inbox" style={style.svgIcon} fill="#40a9ff" />
                   </p>
                   <p className="ant-upload-text">点击或拖拽一张或多张照片上传</p>
                   <p className="ant-upload-hint">{"正在使用" + type + "图床"}</p>
+                  <p className="ant-upload-hint">支持 BMP、PNG、JPEG、JPG、GIF、WebP；其他可解码图片自动转换为 PNG。</p>
                 </Dragger>
               </TabPane>
               {useImageHosting.isAliyunOpen ? (
