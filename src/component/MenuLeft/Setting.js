@@ -3,6 +3,7 @@ import {Menu, Dropdown} from "antd";
 
 import SyncScroll from "./Setting/SyncScroll";
 import ContainImgName from "./Setting/ContainImgName";
+import PasteImageUpload from "./Setting/PasteImageUpload";
 
 import "./common.css";
 
@@ -13,6 +14,9 @@ const menu = (
     </Menu.Item>
     <Menu.Item>
       <ContainImgName />
+    </Menu.Item>
+    <Menu.Item>
+      <PasteImageUpload />
     </Menu.Item>
   </Menu>
 );

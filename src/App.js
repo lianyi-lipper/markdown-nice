@@ -34,7 +34,7 @@ import diagnoseMarkdown from "./utils/markdownDiagnostics";
 import {diagnoseExamMarkdown, insertAnswerPlaceholders} from "./utils/examMarkdownDiagnostics";
 import pluginCenter from "./utils/pluginCenter";
 import appContext from "./utils/appContext";
-import {uploadAdaptor} from "./utils/imageHosting";
+import {uploadAdaptor, writeLocalImageToEditor} from "./utils/imageHosting";
 import {resolveLocalImages} from "./utils/localImages";
 import bindHotkeys, {betterTab, rightClick} from "./utils/hotkey";
 import {message} from "antd";
@@ -376,7 +376,12 @@ class App extends Component {
 
     if (e.clipboardData && e.clipboardData.files) {
       for (let i = 0; i < e.clipboardData.files.length; i++) {
-        uploadAdaptor({file: e.clipboardData.files[i], content: this.props.content});
+        const file = e.clipboardData.files[i];
+        if (this.props.navbar.isPasteImageUpload) {
+          uploadAdaptor({file, content: this.props.content});
+        } else {
+          writeLocalImageToEditor({file, content: this.props.content});
+        }
       }
     }
 
