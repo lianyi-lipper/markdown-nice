@@ -169,7 +169,10 @@
 
 .nice-markdown-diagnostics-title {
   display: block;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   margin: 0 0 4px;
   padding: 0;
   border: 0;
@@ -178,6 +181,35 @@
   cursor: pointer;
   font-weight: 600;
   text-align: left;
+}
+
+.nice-diagnostics-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nice-diagnostics-icon {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.nice-diagnostics-icon:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.nice-diagnostics-drag {
+  cursor: move;
+  user-select: none;
 }
 
 .nice-markdown-diagnostics-collapsed .nice-markdown-diagnostics-title {

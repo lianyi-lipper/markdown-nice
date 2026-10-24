@@ -50,17 +50,22 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.scale = 1;
+    this.diagnosticsPanels = {};
     this.handleUpdateMathjax = throttle(() => this.updateMathjax(), THROTTLE_MATHJAX_TIME);
     this.handleThrottleChange = throttle(this.handleChange, THROTTLE_MD_RENDER_TIME);
     this.state = {
       focus: false,
       diagnosticsOpen: false,
       examDiagnosticsOpen: false,
+      diagnosticsHidden: false,
+      diagnosticsPosition: null,
+      examDiagnosticsPosition: null,
       latexDiagnostics: [],
     };
   }
 
   componentDidMount() {
+    window.addEventListener("resize", this.clampDiagnosticsPositions);
     document.addEventListener("fullscreenchange", this.solveScreenChange);
     document.addEventListener("webkitfullscreenchange", this.solveScreenChange);
     document.addEventListener("mozfullscreenchange", this.solveScreenChange);
@@ -101,17 +106,93 @@ class App extends Component {
   }
 
   componentDidUpdate() {
+    this.clampDiagnosticsPositions();
     if (pluginCenter.mathjax) {
       this.handleUpdateMathjax();
     }
   }
 
   componentWillUnmount() {
+    window.removeEventListener("resize", this.clampDiagnosticsPositions);
     document.removeEventListener("fullscreenchange", this.solveScreenChange);
     document.removeEventListener("webkitfullscreenchange", this.solveScreenChange);
     document.removeEventListener("mozfullscreenchange", this.solveScreenChange);
     document.removeEventListener("MSFullscreenChange", this.solveScreenChange);
+    document.removeEventListener("mousemove", this.handleDiagnosticsDrag);
+    document.removeEventListener("mouseup", this.stopDiagnosticsDrag);
   }
+
+  // Diagnostics controls are grouped here so their document-level drag listeners stay together.
+  // eslint-disable-next-line react/sort-comp
+  startDiagnosticsDrag = (panel, event) => {
+    if (event.button !== 0) return;
+    const container = event.currentTarget.closest(".nice-diagnostics-panel");
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    this.diagnosticsDrag = {
+      panel,
+      offsetX: event.clientX - rect.left,
+      offsetY: event.clientY - rect.top,
+      width: rect.width,
+      height: rect.height,
+    };
+    const positionKey = panel === "exam" ? "examDiagnosticsPosition" : "diagnosticsPosition";
+    this.setState({[positionKey]: {left: rect.left, top: rect.top, width: rect.width}});
+    document.addEventListener("mousemove", this.handleDiagnosticsDrag);
+    document.addEventListener("mouseup", this.stopDiagnosticsDrag);
+    event.preventDefault();
+  };
+
+  handleDiagnosticsDrag = (event) => {
+    if (!this.diagnosticsDrag) return;
+    const {panel, offsetX, offsetY, width, height} = this.diagnosticsDrag;
+    const positionKey = panel === "exam" ? "examDiagnosticsPosition" : "diagnosticsPosition";
+    const maxLeft = Math.max(0, window.innerWidth - width);
+    const maxTop = Math.max(0, window.innerHeight - height);
+    this.setState({
+      [positionKey]: {
+        width,
+        left: Math.min(maxLeft, Math.max(0, event.clientX - offsetX)),
+        top: Math.min(maxTop, Math.max(0, event.clientY - offsetY)),
+      },
+    });
+  };
+
+  stopDiagnosticsDrag = () => {
+    this.diagnosticsDrag = null;
+    document.removeEventListener("mousemove", this.handleDiagnosticsDrag);
+    document.removeEventListener("mouseup", this.stopDiagnosticsDrag);
+  };
+
+  clampDiagnosticsPositions = () => {
+    const updates = {};
+    for (const panel of ["markdown", "exam"]) {
+      const positionKey = panel === "exam" ? "examDiagnosticsPosition" : "diagnosticsPosition";
+      const position = this.state[positionKey];
+      const container = this.diagnosticsPanels[panel];
+      if (!position || !container) continue;
+      const rect = container.getBoundingClientRect();
+      const left = Math.min(Math.max(0, window.innerWidth - rect.width), Math.max(0, position.left));
+      const top = Math.min(Math.max(0, window.innerHeight - rect.height), Math.max(0, position.top));
+      if (left !== position.left || top !== position.top) {
+        updates[positionKey] = {...position, left, top};
+      }
+    }
+    if (Object.keys(updates).length) this.setState(updates);
+  };
+
+  diagnosticsPanelStyle = (position) =>
+    position
+      ? {
+          position: "fixed",
+          left: position.left,
+          top: position.top,
+          width: position.width,
+          maxWidth: "calc(100vw - 16px)",
+          right: "auto",
+          bottom: "auto",
+        }
+      : undefined;
 
   setCustomImageHosting = () => {
     if (this.props.useImageHosting === undefined) {
@@ -442,15 +523,43 @@ class App extends Component {
                   onPaste={this.handlePaste}
                   ref={this.getInstance}
                 />
-                {diagnostics.length > 0 && (
+                {diagnostics.length > 0 && !this.state.diagnosticsHidden && (
                   <div
-                    className={`nice-markdown-diagnostics ${
+                    className={`nice-diagnostics-panel nice-markdown-diagnostics ${
                       this.state.diagnosticsOpen ? "" : "nice-markdown-diagnostics-collapsed"
                     }`}
+                    style={this.diagnosticsPanelStyle(this.state.diagnosticsPosition)}
+                    ref={(node) => {
+                      this.diagnosticsPanels.markdown = node;
+                    }}
                   >
-                    <button className="nice-markdown-diagnostics-title" type="button" onClick={this.toggleDiagnostics}>
-                      {diagnosticsToggleText}
-                    </button>
+                    <div className="nice-diagnostics-header">
+                      <button
+                        className="nice-markdown-diagnostics-title"
+                        type="button"
+                        onClick={this.toggleDiagnostics}
+                      >
+                        {diagnosticsToggleText}
+                      </button>
+                      <button
+                        className="nice-diagnostics-icon nice-diagnostics-drag"
+                        type="button"
+                        title="拖动"
+                        aria-label="拖动 Markdown 检查面板"
+                        onMouseDown={(event) => this.startDiagnosticsDrag("markdown", event)}
+                      >
+                        ↕
+                      </button>
+                      <button
+                        className="nice-diagnostics-icon"
+                        type="button"
+                        title="隐藏"
+                        aria-label="隐藏 Markdown 检查面板"
+                        onClick={() => this.setState({diagnosticsHidden: true})}
+                      >
+                        ×
+                      </button>
+                    </div>
                     {this.state.diagnosticsOpen && (
                       <div>
                         {diagnostics.slice(0, 6).map((diagnostic, index) => (
@@ -472,17 +581,41 @@ class App extends Component {
                 )}
                 {isExamDiagnosticsEnabled && (
                   <div
-                    className={`nice-exam-diagnostics ${
+                    className={`nice-diagnostics-panel nice-exam-diagnostics ${
                       this.state.examDiagnosticsOpen ? "" : "nice-exam-diagnostics-collapsed"
                     }`}
+                    style={this.diagnosticsPanelStyle(this.state.examDiagnosticsPosition)}
+                    ref={(node) => {
+                      this.diagnosticsPanels.exam = node;
+                    }}
                   >
-                    <button
-                      className="nice-markdown-diagnostics-title"
-                      type="button"
-                      onClick={this.toggleExamDiagnostics}
-                    >
-                      {examDiagnosticsToggleText}
-                    </button>
+                    <div className="nice-diagnostics-header">
+                      <button
+                        className="nice-markdown-diagnostics-title"
+                        type="button"
+                        onClick={this.toggleExamDiagnostics}
+                      >
+                        {examDiagnosticsToggleText}
+                      </button>
+                      <button
+                        className="nice-diagnostics-icon nice-diagnostics-drag"
+                        type="button"
+                        title="拖动"
+                        aria-label="拖动试卷检查面板"
+                        onMouseDown={(event) => this.startDiagnosticsDrag("exam", event)}
+                      >
+                        ↕
+                      </button>
+                      <button
+                        className="nice-diagnostics-icon"
+                        type="button"
+                        title="关闭试卷检查"
+                        aria-label="关闭试卷检查"
+                        onClick={() => this.props.view.setExamDiagnosticsEnabled(false)}
+                      >
+                        ×
+                      </button>
+                    </div>
                     {this.state.examDiagnosticsOpen && (
                       <div>
                         <div className="nice-exam-diagnostics-actions">
